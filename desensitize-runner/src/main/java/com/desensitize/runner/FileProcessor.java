@@ -84,6 +84,30 @@ public class FileProcessor {
         }
     }
 
+    public static void processTableFile(String inputPath, String outputPath) throws CsvValidationException, IOException {
+        Path path = Paths.get(inputPath);
+        validateFile(path);
+
+        Path outPath = Paths.get(outputPath);
+        Path outDir = outPath.getParent();
+        if (outDir != null && !Files.exists(outDir)) {
+            Files.createDirectories(outDir);
+        }
+
+        String extension = getFileExtension(path).toLowerCase();
+
+        switch (extension) {
+            case "csv":
+                processCsvFileTo(path, outPath);
+                break;
+            case "xlsx":
+                processXlsxFileTo(path, outPath);
+                break;
+            default:
+                throw new IllegalArgumentException("不支持的表格格式 ." + extension + "，支持: csv, xlsx");
+        }
+    }
+
     private static void processCsvFile(Path path) throws IOException, CsvValidationException {
         List<String[]> allRows = new ArrayList<>();
         try (CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(path.toFile()), StandardCharsets.UTF_8))) {
@@ -125,6 +149,45 @@ public class FileProcessor {
         }
 
         System.out.println("CSV脱敏完成，结果保存在: " + resultPath);
+    }
+
+    private static void processCsvFileTo(Path path, Path outputPath) throws IOException, CsvValidationException {
+        List<String[]> allRows = new ArrayList<>();
+        try (CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(path.toFile()), StandardCharsets.UTF_8))) {
+            String[] line;
+            while ((line = reader.readNext()) != null) {
+                allRows.add(line);
+            }
+        }
+
+        if (allRows.isEmpty()) {
+            throw new IllegalArgumentException("表格文件为空");
+        }
+
+        String[] headers = allRows.get(0);
+        String[] typeMapping = resolveColumnTypes(headers);
+
+        List<String[]> outputRows = new ArrayList<>();
+        outputRows.add(headers);
+
+        for (int i = 1; i < allRows.size(); i++) {
+            String[] row = allRows.get(i);
+            String[] maskedRow = new String[row.length];
+            for (int col = 0; col < row.length; col++) {
+                String cellValue = row[col] != null ? row[col] : "";
+                if (typeMapping[col] != null) {
+                    maskedRow[col] = DesensitizeUtil.mask(cellValue, typeMapping[col]);
+                } else {
+                    maskedRow[col] = DesensitizeUtil.maskLongText(cellValue);
+                }
+            }
+            outputRows.add(maskedRow);
+        }
+
+        try (CSVWriter writer = new CSVWriter(
+                new OutputStreamWriter(new FileOutputStream(outputPath.toFile()), StandardCharsets.UTF_8))) {
+            writer.writeAll(outputRows);
+        }
     }
 
     private static void processXlsxFile(Path path) throws IOException {
@@ -182,6 +245,59 @@ public class FileProcessor {
         }
 
         System.out.println("XLSX脱敏完成，结果保存在: " + resultPath);
+    }
+
+    private static void processXlsxFileTo(Path path, Path outputPath) throws IOException {
+        List<List<String>> allRows = new ArrayList<>();
+        try (Workbook workbook = new XSSFWorkbook(new FileInputStream(path.toFile()))) {
+            Sheet sheet = workbook.getSheetAt(0);
+
+            for (Row row : sheet) {
+                List<String> rowData = new ArrayList<>();
+                for (Cell cell : row) {
+                    rowData.add(getCellValueAsString(cell));
+                }
+                allRows.add(rowData);
+            }
+        }
+
+        if (allRows.isEmpty()) {
+            throw new IllegalArgumentException("表格文件为空");
+        }
+
+        List<String> headerRow = allRows.get(0);
+        String[] headers = headerRow.toArray(new String[0]);
+        String[] typeMapping = resolveColumnTypes(headers);
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Sheet1");
+
+            Row headerRowOut = sheet.createRow(0);
+            for (int col = 0; col < headers.length; col++) {
+                Cell cell = headerRowOut.createCell(col);
+                cell.setCellValue(headers[col]);
+            }
+
+            for (int i = 1; i < allRows.size(); i++) {
+                List<String> row = allRows.get(i);
+                Row dataRow = sheet.createRow(i);
+                for (int col = 0; col < row.size(); col++) {
+                    String cellValue = row.get(col) != null ? row.get(col) : "";
+                    String masked;
+                    if (typeMapping[col] != null) {
+                        masked = DesensitizeUtil.mask(cellValue, typeMapping[col]);
+                    } else {
+                        masked = DesensitizeUtil.maskLongText(cellValue);
+                    }
+                    Cell cell = dataRow.createCell(col);
+                    cell.setCellValue(masked);
+                }
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(outputPath.toFile())) {
+                workbook.write(fos);
+            }
+        }
     }
 
     private static String[] resolveColumnTypes(String[] headers) {

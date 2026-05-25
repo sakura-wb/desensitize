@@ -37,7 +37,7 @@ desensitize:
     - typeId: "phone"
       name: "手机号码"
       regexPattern: "1[3-9]\\d{9}"
-      mixedRegexPattern: "(手机|电话|联系方式|Tel)[：:]\\s*(1[3-9]\\d{9})"
+      mixedRegexPattern: "(手机|电话|手机号|电话号码|联系方式|Tel)[：:]\\s*(1[3-9]\\d{9})"
       maskFormat: "preserve(3,4)"
 
     # ========== 国际手机号 ==========
@@ -72,14 +72,14 @@ desensitize:
     - typeId: "passport"
       name: "护照号码"
       regexPattern: "[A-Za-z0-9]{7,9}"
-      mixedRegexPattern: "(护照|Passport)[：:]\\s*([A-Za-z0-9]{7,9})"
+      mixedRegexPattern: "(护照|护照号|Passport)[：:]\\s*([A-Za-z0-9]{7,9})"
       maskFormat: "preserve(2,2)"
 
     # ========== 驾驶证号码 ==========
     - typeId: "driver_license"
       name: "驾驶证号码"
       regexPattern: "\\d{15,18}"
-      mixedRegexPattern: "(驾驶证|驾照|Driver)[：:]\\s*(\\d{15,18})"
+      mixedRegexPattern: "(驾驶证|驾驶证号|驾照|Driver)[：:]\\s*(\\d{15,18})"
       maskFormat: "preserve(4,4)"
 
     # ========== 军官证号码 ==========
@@ -100,7 +100,7 @@ desensitize:
     - typeId: "deposit_book"
       name: "存折账号"
       regexPattern: "\\d{16,22}"
-      mixedRegexPattern: "(存折|存折账号)[：:]\\s*(\\d{16,22})"
+      mixedRegexPattern: "(存折|存折号|存折账号)[：:]\\s*(\\d{16,22})"
       maskFormat: "preserve(6,4)"
 
     # ========== 地址（策略模式） ==========
@@ -108,7 +108,7 @@ desensitize:
       name: "地址"
       strategyType: true
       defaultMaskFormat: "maskAll()"
-      mixedRegexPattern: "(地址|住址|Address)[：:]\\s*(.+?)(?:[，,。.]|$)"
+      mixedRegexPattern: "(地址|住址|家庭住址|Address)[：:]\\s*(.+?)(?:[，,。.]|$)"
       subTypes:
         - typeId: "chinese_address"
           name: "中文地址"
@@ -151,7 +151,7 @@ desensitize:
     - typeId: "mac_address"
       name: "MAC地址"
       regexPattern: "([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}"
-      mixedRegexPattern: "(MAC|物理地址|Mac)[：:]\\s*((?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2})"
+      mixedRegexPattern: "(MAC|MAC地址|物理地址|Mac)[：:]\\s*((?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2})"
       maskFormat: "preserve(8,5)"
 
     # ========== 车牌号码 ==========
@@ -166,14 +166,14 @@ desensitize:
       name: "人民币金额"
       regexPattern: "[¥￥]\\d{1,3}(,\\d{3})*(\\.\\d{2})?"
       mixedRegexPattern: "(金额|人民币)[：:]\\s*([¥￥]\\d{1,3}(?:,\\d{3})*(?:\\.\\d{2})?)"
-      maskFormat: "maskAll()"
+      maskFormat: "preserve(1,0)"
 
     # ========== 外币金额 ==========
     - typeId: "foreign_amount"
       name: "外币金额"
       regexPattern: "[$€£]\\d{1,3}(,\\d{3})*(\\.\\d{2})?"
       mixedRegexPattern: "(外币|美元|欧元|英镑)[：:]\\s*([$€£]\\d{1,3}(?:,\\d{3})*(?:\\.\\d{2})?)"
-      maskFormat: "maskAll()"
+      maskFormat: "preserve(1,0)"
 
     # ========== 验证码 ==========
     - typeId: "verification_code"

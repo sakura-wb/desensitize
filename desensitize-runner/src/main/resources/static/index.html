@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据脱敏组件</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            padding: 30px;
+            margin-bottom: 25px;
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .radio-item:hover {
+            background: #e9ecef;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+
+        .radio-item label {
+            margin: 0;
+            font-weight: normal;
+            color: #333;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-wrapper select {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            appearance: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .select-wrapper select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .select-wrapper::after {
+            content: '▼';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            pointer-events: none;
+            font-size: 12px;
+        }
+
+        .upload-area {
+            border: 2px dashed #e0e0e0;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f5f7ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #f0f2ff;
+            transform: scale(1.02);
+        }
+
+        .upload-area i {
+            font-size: 48px;
+            color: #999;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .upload-area span {
+            color: #666;
+            font-size: 16px;
+            display: block;
+        }
+
+        .upload-area small {
+            color: #999;
+            font-size: 13px;
+            display: block;
+            margin-top: 8px;
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .file-info {
+            background: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-info span {
+            color: #2e7d32;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .multi-input-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .multi-input-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .multi-input-item label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #444;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .multi-input-item input {
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .multi-input-item input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .multi-input-item input::placeholder {
+            color: #bbb;
+        }
+
+        .single-result-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .single-result-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+            min-width: 220px;
+        }
+
+        .single-result-item .label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .single-result-item .original {
+            font-size: 13px;
+            color: #888;
+            font-family: 'Consolas', 'Monaco', monospace;
+            word-break: break-all;
+        }
+
+        .single-result-item .masked {
+            font-size: 13px;
+            color: #667eea;
+            font-family: 'Consolas', 'Monaco', monospace;
+            word-break: break-all;
+        }
+
+        .result-area {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .result-area.show {
+            display: block;
+        }
+
+        .result-area.success {
+            background: #e8f5e9;
+            border: 1px solid #c8e6c9;
+        }
+
+        .result-area.error {
+            background: #ffebee;
+            border: 1px solid #ffcdd2;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-title.success {
+            color: #2e7d32;
+        }
+
+        .result-title.error {
+            color: #c62828;
+        }
+
+        .result-title i {
+            font-size: 20px;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .result-text {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            min-height: 100px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-size: 14px;
+            color: #333;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+        }
+
+        .result-meta {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ddd;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .result-meta span {
+            margin-right: 20px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .api-endpoint {
+            background: #f5f7ff;
+            border: 1px solid #e0e4ff;
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            color: #536dfe;
+            margin-top: 15px;
+        }
+
+        .api-endpoint small {
+            color: #999;
+            font-size: 11px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .type-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .type-tag {
+            background: #f0f4ff;
+            border: 1px solid #d0d8ff;
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .type-tag:hover {
+            background: #e0e8ff;
+            transform: translateY(-2px);
+        }
+
+        .type-tag.selected {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .type-tag .type-id {
+            font-weight: 600;
+            display: block;
+        }
+
+        .type-tag .type-name {
+            font-size: 12px;
+            opacity: 0.8;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .type-tag.selected .type-name {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .upload-area {
+                padding: 25px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 数据脱敏组件</h1>
+            <p>保护敏感数据，守护隐私安全</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="string">字符串脱敏</button>
+            <button class="tab" data-tab="file">文件脱敏</button>
+            <button class="tab" data-tab="table">表格脱敏</button>
+        </div>
+
+        <div id="string-tab" class="tab-content">
+            <div class="card">
+                <h2>📝 输入文本</h2>
+
+                <div class="form-group">
+                    <label>脱敏模式</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="mode-long" name="mode" value="long_text" checked>
+                            <label for="mode-long">📄 长文本模式（自动识别多种敏感类型）</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="mode-single" name="mode" value="single">
+                            <label for="mode-single">🎯 单一类型（分别输入各敏感信息）</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="mode-ai" name="mode" value="ai">
+                            <label for="mode-ai">🤖 AI脱敏（智能识别）</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" id="textarea-group">
+                    <label for="input-content">待脱敏内容</label>
+                    <textarea id="input-content" placeholder="请输入需要脱敏的文本内容，例如：&#10;张三的手机号是13800138000，身份证号是110101199001011234"></textarea>
+                </div>
+
+                <div class="form-group" id="type-select-group" style="display: none;">
+                    <label>分别输入需要脱敏的内容（有输入的才脱敏，空字段跳过）</label>
+                    <div class="multi-input-form">
+                        <div class="multi-input-item">
+                            <label>📱 手机号</label>
+                            <input type="text" id="input-single-phone" placeholder="请输入手机号">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>👤 姓名</label>
+                            <input type="text" id="input-single-name" placeholder="请输入姓名">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>🆔 身份证号</label>
+                            <input type="text" id="input-single-id_card" placeholder="请输入身份证号">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>✉️ 邮箱</label>
+                            <input type="text" id="input-single-email" placeholder="请输入邮箱">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>💳 银行卡号</label>
+                            <input type="text" id="input-single-bank_card" placeholder="请输入银行卡号">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>📍 地址</label>
+                            <input type="text" id="input-single-address" placeholder="请输入地址">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>🚗 车牌号</label>
+                            <input type="text" id="input-single-license_plate" placeholder="请输入车牌号">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>🌍 护照号</label>
+                            <input type="text" id="input-single-passport" placeholder="请输入护照号">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>🪪 驾驶证号</label>
+                            <input type="text" id="input-single-driver_license" placeholder="请输入驾驶证号">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>💂 军官证号</label>
+                            <input type="text" id="input-single-military_id" placeholder="请输入军官证号">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>🏦 存折号</label>
+                            <input type="text" id="input-single-deposit_book" placeholder="请输入存折号">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>🌐 IP地址</label>
+                            <input type="text" id="input-single-ip_address" placeholder="请输入IP地址">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>🔗 MAC地址</label>
+                            <input type="text" id="input-single-mac_address" placeholder="请输入MAC地址">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>🎂 生日</label>
+                            <input type="text" id="input-single-birthday" placeholder="请输入生日">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>📞 固定电话</label>
+                            <input type="text" id="input-single-landline" placeholder="请输入固定电话">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>🌎 国际电话</label>
+                            <input type="text" id="input-single-international" placeholder="请输入国际电话">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>💰 人民币金额</label>
+                            <input type="text" id="input-single-rmb" placeholder="请输入人民币金额">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>💵 外币金额</label>
+                            <input type="text" id="input-single-foreign" placeholder="请输入外币金额">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>🔢 验证码</label>
+                            <input type="text" id="input-single-verification" placeholder="请输入验证码">
+                        </div>
+                        <div class="multi-input-item">
+                            <label>🌏 英文姓名</label>
+                            <input type="text" id="input-single-english" placeholder="请输入英文姓名">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="string-submit">开始脱敏</button>
+            </div>
+
+            <div class="card">
+                <h2>✅ 脱敏结果</h2>
+                <div class="result-area" id="string-result">
+                    <div class="result-header">
+                        <div class="result-title">
+                            <i>📋</i> 原始文本
+                        </div>
+                    </div>
+                    <div class="result-text" id="result-original">结果将在这里显示...</div>
+                    <div class="result-header" style="margin-top: 20px;">
+                        <div class="result-title success">
+                            <i>🔒</i> 脱敏后文本
+                        </div>
+                    </div>
+                    <div class="result-text" id="result-masked"></div>
+                </div>
+                <div class="result-area" id="multi-result-area" style="display: none;">
+                    <div class="result-header">
+                        <div class="result-title success">
+                            <i>🔒</i> 脱敏结果
+                        </div>
+                    </div>
+                    <div class="multi-input-form" id="result-multi-form"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="file-tab" class="tab-content" style="display: none;">
+            <div class="card">
+                <h2>📁 上传文档文件</h2>
+                <div class="upload-area" id="file-upload">
+                    <i>📄</i>
+                    <span>点击或拖拽文件到此处上传</span>
+                    <small>支持格式：.txt, .md, .json, .xml 等文本文件</small>
+                    <input type="file" id="file-input" accept=".txt,.md,.json,.xml,.log">
+                </div>
+                <div class="file-info" id="file-info">
+                    <span id="file-name"></span>
+                </div>
+
+                <button class="btn btn-primary" id="file-submit" disabled>开始脱敏</button>
+            </div>
+
+            <div class="card">
+                <h2>📥 脱敏结果</h2>
+                <div class="result-area" id="file-result">
+                    <div class="result-header">
+                        <div class="result-title success">
+                            <i>✅</i> 处理完成
+                        </div>
+                        <div class="result-actions">
+                            <button class="btn btn-secondary" id="download-file" style="display: none;">下载文件</button>
+                        </div>
+                    </div>
+                    <div class="result-text" id="file-preview">预览将在这里显示...</div>
+                    <div class="result-meta" id="file-meta"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="table-tab" class="tab-content" style="display: none;">
+            <div class="card">
+                <h2>📊 上传表格文件</h2>
+                <div class="upload-area" id="table-upload">
+                    <i>📊</i>
+                    <span>点击或拖拽文件到此处上传</span>
+                    <small>支持格式：.xlsx, .xls, .csv</small>
+                    <input type="file" id="table-input" accept=".xlsx,.xls,.csv">
+                </div>
+                <div class="file-info" id="table-info">
+                    <span id="table-name"></span>
+                </div>
+
+                <button class="btn btn-primary" id="table-submit" disabled>开始脱敏</button>
+            </div>
+
+            <div class="card">
+                <h2>📥 脱敏结果</h2>
+                <div class="result-area" id="table-result">
+                    <div class="result-header">
+                        <div class="result-title success">
+                            <i>✅</i> 处理完成
+                        </div>
+                        <div class="result-actions">
+                            <button class="btn btn-secondary" id="download-table" style="display: none;">下载文件</button>
+                        </div>
+                    </div>
+                    <div class="result-meta" id="table-meta"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/desensitize';
+        let selectedFile = null;
+        let selectedTableFile = null;
+        let downloadFileUrl = null;
+        let downloadTableUrl = null;
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const tabId = tab.dataset.tab;
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                document.getElementById(`${tabId}-tab`).style.display = 'block';
+            });
+        });
+
+        document.querySelectorAll('input[name="mode"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                const group = document.getElementById('type-select-group');
+                const textareaGroup = document.getElementById('textarea-group');
+                const resultArea = document.getElementById('string-result');
+                const multiResultArea = document.getElementById('multi-result-area');
+                
+                if (document.getElementById('mode-single').checked) {
+                    group.style.display = 'block';
+                    textareaGroup.style.display = 'none';
+                    resultArea.style.display = 'none';
+                    multiResultArea.style.display = 'block';
+                } else {
+                    group.style.display = 'none';
+                    textareaGroup.style.display = 'block';
+                    resultArea.style.display = 'block';
+                    multiResultArea.style.display = 'none';
+                }
+            });
+        });
+
+        document.getElementById('string-submit').addEventListener('click', async () => {
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const resultArea = document.getElementById('string-result');
+            resultArea.classList.remove('show', 'success', 'error');
+
+            if (mode === 'single') {
+                const inputs = {
+                    phone: document.getElementById('input-single-phone').value,
+                    name: document.getElementById('input-single-name').value,
+                    id_card: document.getElementById('input-single-id_card').value,
+                    email: document.getElementById('input-single-email').value,
+                    bank_card: document.getElementById('input-single-bank_card').value,
+                    address: document.getElementById('input-single-address').value,
+                    license_plate: document.getElementById('input-single-license_plate').value,
+                    passport: document.getElementById('input-single-passport').value,
+                    driver_license: document.getElementById('input-single-driver_license').value,
+                    military_id: document.getElementById('input-single-military_id').value,
+                    deposit_book: document.getElementById('input-single-deposit_book').value,
+                    ip_address: document.getElementById('input-single-ip_address').value,
+                    mac_address: document.getElementById('input-single-mac_address').value,
+                    birthday: document.getElementById('input-single-birthday').value,
+                    landline: document.getElementById('input-single-landline').value,
+                    international: document.getElementById('input-single-international').value,
+                    rmb: document.getElementById('input-single-rmb').value,
+                    foreign: document.getElementById('input-single-foreign').value,
+                    verification: document.getElementById('input-single-verification').value,
+                    english: document.getElementById('input-single-english').value
+                };
+
+                const hasInput = Object.values(inputs).some(v => v && v.trim());
+                if (!hasInput) {
+                    alert('请至少在一个输入框中填写内容');
+                    return;
+                }
+
+                showLoading(true);
+
+                try {
+                    const response = await fetch(`${API_BASE}/multi-type`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(inputs)
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const results = data.data.results || {};
+                        const errors = data.data.errors || {};
+                        
+                        if (Object.keys(errors).length > 0) {
+                            const errorList = Object.values(errors).join('\n');
+                            alert('以下字段格式不正确：\n' + errorList);
+                        }
+                        
+                        let resultHtml = '';
+                        const labels = {
+                            phone: '📱 手机号', name: '👤 姓名', id_card: '🆔 身份证号',
+                            email: '✉️ 邮箱', bank_card: '💳 银行卡号', address: '📍 地址',
+                            license_plate: '🚗 车牌号', passport: '🌍 护照号', driver_license: '🪪 驾驶证号',
+                            military_id: '💂 军官证号', deposit_book: '🏦 存折号', ip_address: '🌐 IP地址',
+                            mac_address: '🔗 MAC地址', birthday: '🎂 生日', landline: '📞 固定电话',
+                            international: '🌎 国际电话', rmb: '💰 人民币金额', foreign: '💵 外币金额',
+                            verification: '🔢 验证码', english: '🌏 英文姓名'
+                        };
+                        
+                        Object.entries(inputs).forEach(([key, value]) => {
+                            if (value && value.trim()) {
+                                const masked = results[key] || value;
+                                const isError = errors.hasOwnProperty(key);
+                                resultHtml += `
+                                    <div class="multi-input-item">
+                                        <label>${labels[key] || key}</label>
+                                        <input type="text" value="${isError ? '格式错误' : masked}" readonly>
+                                    </div>
+                                `;
+                            }
+                        });
+                        
+                        document.getElementById('result-multi-form').innerHTML = resultHtml;
+                        document.getElementById('multi-result-area').style.display = 'block';
+                    } else {
+                        alert('脱敏失败: ' + data.message);
+                    }
+                } catch (error) {
+                    alert('请求失败: ' + error.message);
+                } finally {
+                    showLoading(false);
+                }
+            } else {
+                const content = document.getElementById('input-content').value;
+                if (!content.trim()) {
+                    alert('请输入待脱敏的内容');
+                    return;
+                }
+
+                showLoading(true);
+
+                try {
+                    const response = await fetch(`${API_BASE}/string`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content, mode })
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        document.getElementById('result-original').textContent = content;
+                        document.getElementById('result-masked').textContent = data.data.masked;
+                        resultArea.classList.add('show', 'success');
+                    } else {
+                        resultArea.classList.add('show', 'error');
+                        document.getElementById('result-original').textContent = data.message;
+                        document.getElementById('result-masked').textContent = '';
+                    }
+                } catch (error) {
+                    resultArea.classList.add('show', 'error');
+                    document.getElementById('result-original').textContent = '请求失败: ' + error.message;
+                    document.getElementById('result-masked').textContent = '';
+                } finally {
+                    showLoading(false);
+                }
+            }
+        });
+
+        const fileUpload = document.getElementById('file-upload');
+        const fileInput = document.getElementById('file-input');
+        const fileInfo = document.getElementById('file-info');
+        const fileName = document.getElementById('file-name');
+
+        fileUpload.addEventListener('click', () => fileInput.click());
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.classList.add('dragover');
+        });
+        fileUpload.addEventListener('dragleave', () => fileUpload.classList.remove('dragover'));
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+            handleFileDrop(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => handleFileDrop(e.target.files[0]));
+
+        function handleFileDrop(file) {
+            if (!file) return;
+            
+            const allowedTypes = ['.txt', '.md', '.json', '.xml', '.log'];
+            const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+            if (!allowedTypes.includes(ext)) {
+                alert('不支持的文件格式，请上传txt、md、json、xml或log文件');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = `已选择: ${file.name} (${formatSize(file.size)})`;
+            fileInfo.classList.add('show');
+            document.getElementById('file-submit').disabled = false;
+        }
+
+        document.getElementById('file-submit').addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            showLoading(true);
+            const resultArea = document.getElementById('file-result');
+            resultArea.classList.remove('show', 'success', 'error');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const response = await fetch(`${API_BASE}/file`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    resultArea.classList.add('show', 'success');
+                    document.getElementById('file-preview').textContent = data.data.preview || '预览不可用';
+                    document.getElementById('file-meta').innerHTML = `
+                        <span>📁 原始文件: ${data.data.originalFile}</span>
+                        <span>📄 输出文件: ${data.data.outputFile}</span>
+                    `;
+                    
+                    downloadFileUrl = `${API_BASE}/download/${encodeURIComponent(data.data.outputFile)}`;
+                    document.getElementById('download-file').style.display = 'block';
+                } else {
+                    resultArea.classList.add('show', 'error');
+                    document.getElementById('file-preview').textContent = data.message;
+                }
+            } catch (error) {
+                resultArea.classList.add('show', 'error');
+                document.getElementById('file-preview').textContent = '请求失败: ' + error.message;
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        document.getElementById('download-file').addEventListener('click', () => {
+            if (downloadFileUrl) {
+                const link = document.createElement('a');
+                link.href = downloadFileUrl;
+                link.download = downloadFileUrl.split('/').pop();
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        });
+
+        const tableUpload = document.getElementById('table-upload');
+        const tableInput = document.getElementById('table-input');
+        const tableInfo = document.getElementById('table-info');
+        const tableName = document.getElementById('table-name');
+
+        tableUpload.addEventListener('click', () => tableInput.click());
+        tableUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            tableUpload.classList.add('dragover');
+        });
+        tableUpload.addEventListener('dragleave', () => tableUpload.classList.remove('dragover'));
+        tableUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            tableUpload.classList.remove('dragover');
+            handleTableDrop(e.dataTransfer.files[0]);
+        });
+        tableInput.addEventListener('change', (e) => handleTableDrop(e.target.files[0]));
+
+        function handleTableDrop(file) {
+            if (!file) return;
+            
+            const allowedTypes = ['.xlsx', '.xls', '.csv'];
+            const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+            if (!allowedTypes.includes(ext)) {
+                alert('不支持的文件格式，请上传xlsx、xls或csv文件');
+                return;
+            }
+
+            selectedTableFile = file;
+            tableName.textContent = `已选择: ${file.name} (${formatSize(file.size)})`;
+            tableInfo.classList.add('show');
+            document.getElementById('table-submit').disabled = false;
+        }
+
+        document.getElementById('table-submit').addEventListener('click', async () => {
+            if (!selectedTableFile) return;
+
+            showLoading(true);
+            const resultArea = document.getElementById('table-result');
+            resultArea.classList.remove('show', 'success', 'error');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedTableFile);
+
+                const response = await fetch(`${API_BASE}/table`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    resultArea.classList.add('show', 'success');
+                    document.getElementById('table-meta').innerHTML = `
+                        <span>📁 原始文件: ${data.data.originalFile}</span>
+                        <span>📊 输出文件: ${data.data.outputFile}</span>
+                    `;
+                    
+                    downloadTableUrl = `${API_BASE}/download/${encodeURIComponent(data.data.outputFile)}`;
+                    document.getElementById('download-table').style.display = 'block';
+                } else {
+                    resultArea.classList.add('show', 'error');
+                    document.getElementById('table-meta').innerHTML = `<span style="color: #c62828;">❌ ${data.message}</span>`;
+                }
+            } catch (error) {
+                resultArea.classList.add('show', 'error');
+                document.getElementById('table-meta').innerHTML = `<span style="color: #c62828;">❌ 请求失败: ${error.message}</span>`;
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        document.getElementById('download-table').addEventListener('click', () => {
+            if (downloadTableUrl) {
+                const link = document.createElement('a');
+                link.href = downloadTableUrl;
+                link.download = downloadTableUrl.split('/').pop();
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        });
+
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('show', show);
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

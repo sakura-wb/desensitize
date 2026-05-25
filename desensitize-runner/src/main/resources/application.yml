@@ -1,9 +1,16 @@
+server:
+  port: 8080
+
 spring:
-  main:
-    web-application-type: none
+  application:
+    name: desensitize-runner
   autoconfigure:
     exclude:
       - org.springframework.ai.autoconfigure.openai.OpenAiAutoConfiguration
   config:
     import:
       - classpath:desensitize-config.yml
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
