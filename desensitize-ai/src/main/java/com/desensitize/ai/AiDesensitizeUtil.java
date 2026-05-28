@@ -163,6 +163,10 @@ public class AiDesensitizeUtil {
     }
 
     public static List<AuditResult> auditString(String content) {
+        return audit(content);
+    }
+
+    public static List<AuditResult> audit(String content) {
         if (content == null || content.isEmpty()) {
             return Collections.emptyList();
         }
@@ -239,7 +243,7 @@ public class AiDesensitizeUtil {
             }
             try {
                 AuditResult item = OBJECT_MAPPER.readValue(trimmedLine, AuditResult.class);
-                if (item.getType() != null && !item.getType().isBlank()
+                if (item.getCategory() != null && !item.getCategory().isBlank()
                         && item.getContent() != null && !item.getContent().isBlank()) {
                     results.add(item);
                 }

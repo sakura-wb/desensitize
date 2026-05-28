@@ -18,7 +18,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -542,7 +544,7 @@ public class DesensitizeController {
         if (lastSlash >= 0) {
             name = name.substring(lastSlash + 1);
         }
-        name = name.replaceAll("[.\\\\/:*?\"<>|]", "");
+        name = name.replaceAll("[\\\\/:*?\"<>|]", "");
         if (name.isEmpty() || ".".equals(name) || "..".equals(name)) {
             return null;
         }
@@ -553,5 +555,137 @@ public class DesensitizeController {
         if (!Files.exists(RESULT_DIR)) {
             Files.createDirectories(RESULT_DIR);
         }
+    }
+
+    @PostMapping("/audit")
+    public ResponseEntity<ResponseResult> auditContent(@RequestBody StringRequest request) {
+        try {
+            String content = request.getContent();
+            if (content == null || content.isEmpty()) {
+                return ResponseEntity.badRequest().body(ResponseResult.error("内容不能为空"));
+            }
+            if (content.length() > MAX_STRING_LENGTH) {
+                return ResponseEntity.badRequest().body(ResponseResult.error("内容过长，最大支持" + MAX_STRING_LENGTH + "字符"));
+            }
+
+            java.util.List<com.desensitize.ai.AuditResult> results = com.desensitize.ai.AiDesensitizeUtil.audit(content);
+
+            return ResponseEntity.ok(ResponseResult.success(results));
+        } catch (Exception e) {
+            log.error("AI审核失败", e);
+            return ResponseEntity.ok(ResponseResult.error("AI审核失败: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/audit/file")
+    public ResponseEntity<ResponseResult> auditFile(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body(ResponseResult.error("请选择要上传的文件"));
+            }
+
+            if (file.getSize() > MAX_FILE_SIZE) {
+                return ResponseEntity.badRequest().body(ResponseResult.error("文件过大，最大支持50MB"));
+            }
+
+            String originalFilename = sanitizeFilename(file.getOriginalFilename());
+            if (originalFilename == null || originalFilename.isBlank()) {
+                return ResponseEntity.badRequest().body(ResponseResult.error("文件名不合法"));
+            }
+
+            String extension = originalFilename.contains(".")
+                ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                : ".txt";
+
+            String content;
+            if (extension.equalsIgnoreCase(".xlsx") || extension.equalsIgnoreCase(".xls")) {
+                content = parseExcelContent(file.getInputStream());
+            } else if (extension.equalsIgnoreCase(".csv")) {
+                content = parseCsvContent(file.getInputStream());
+            } else {
+                content = new String(file.getBytes(), "UTF-8");
+            }
+
+            if (content.length() > MAX_STRING_LENGTH) {
+                return ResponseEntity.badRequest().body(ResponseResult.error("文件内容过长，最大支持" + MAX_STRING_LENGTH + "字符"));
+            }
+
+            java.util.List<com.desensitize.ai.AuditResult> results = com.desensitize.ai.AiDesensitizeUtil.audit(content);
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("originalFile", originalFilename);
+            data.put("results", results);
+
+            return ResponseEntity.ok(ResponseResult.success(data));
+        } catch (IOException e) {
+            log.error("文件审核失败", e);
+            return ResponseEntity.ok(ResponseResult.error("文件处理失败: " + e.getMessage()));
+        } catch (Exception e) {
+            log.error("文件审核失败", e);
+            return ResponseEntity.ok(ResponseResult.error("审核失败: " + e.getMessage()));
+        }
+    }
+
+    private String parseExcelContent(java.io.InputStream inputStream) throws Exception {
+        org.apache.poi.ss.usermodel.Workbook workbook = null;
+        try {
+            workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create(inputStream);
+            StringBuilder content = new StringBuilder();
+            
+            for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+                org.apache.poi.ss.usermodel.Sheet sheet = workbook.getSheetAt(i);
+                content.append("Sheet[").append(i + 1).append("]: ").append(sheet.getSheetName()).append("\n");
+                
+                for (org.apache.poi.ss.usermodel.Row row : sheet) {
+                    List<String> rowValues = new ArrayList<>();
+                    for (org.apache.poi.ss.usermodel.Cell cell : row) {
+                        rowValues.add(getCellValueAsString(cell));
+                    }
+                    content.append(String.join("\t", rowValues)).append("\n");
+                }
+                content.append("\n");
+            }
+            return content.toString();
+        } finally {
+            if (workbook != null) {
+                workbook.close();
+            }
+        }
+    }
+
+    private String getCellValueAsString(org.apache.poi.ss.usermodel.Cell cell) {
+        if (cell == null) {
+            return "";
+        }
+        
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue();
+            case NUMERIC:
+                if (org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cell)) {
+                    return cell.getDateCellValue().toString();
+                }
+                return String.valueOf(cell.getNumericCellValue());
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                try {
+                    return cell.getStringCellValue();
+                } catch (Exception e) {
+                    return String.valueOf(cell.getNumericCellValue());
+                }
+            default:
+                return "";
+        }
+    }
+
+    private String parseCsvContent(java.io.InputStream inputStream) throws Exception {
+        java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream, "UTF-8"));
+        StringBuilder content = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            content.append(line).append("\n");
+        }
+        return content.toString();
     }
 }
